@@ -163,7 +163,7 @@ def compute_predicate_sequence(
     # plt.stem(a.abs().numpy()); plt.show()
 
     parameters = dict(mu=mu, a=a)
-    return predicate_history[999], quality_history[999], parameters
+    return predicate_history, quality_history, parameters
 
 
 def calculate_qualities(selected, a, x, mu, label, n_points):
@@ -225,18 +225,18 @@ def calculate_predicates(selected, a, n_features, scale, mu, vmin, vmax, mean, x
             #         should_include = r[k] < 1.0 * (x[:,k].max()-x[:,k].min())
             should_include = not (ci[0] <= vmin[k] and ci[1] >= vmax[k])
 
-            # if should_include:
-            if ci[0] < vmin_selected:
-                ci[0] = vmin_selected
-            if ci[1] > vmax_selected:
-                ci[1] = vmax_selected
-            predicate_clauses.append(
-                dict(
-                    dim=k,
-                    interval=ci,
-                    attribute=columns[k],
+            if should_include:
+                if ci[0] < vmin_selected:
+                    ci[0] = vmin_selected
+                if ci[1] > vmax_selected:
+                    ci[1] = vmax_selected
+                predicate_clauses.append(
+                    dict(
+                        dim=k,
+                        interval=ci,
+                        attribute=columns[k],
+                    )
                 )
-            )
         predicates.append(predicate_clauses)
 
     return predicates

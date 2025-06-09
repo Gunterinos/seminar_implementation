@@ -2,6 +2,7 @@ const API = "http://127.0.0.1:5000";
 const plotDiv = document.getElementById("scatter");
 let currentSelection = [];
 let scatterData = null;
+let predicates = null;
 
 function renderScatter(data) {
   const defaultColor = new Array(data.x.length).fill('blue');
@@ -36,14 +37,16 @@ async function requestPredicate() {
     }),
   });
   const result = await response.json();
-  document.getElementById("output").textContent = JSON.stringify(result, null, 2);
   if (result.predicates && result.predicates.length > 0) {
-    applyPredicates(result.predicates[0]);
+    predicates = result.predicates;
+    applyPredicates(999);
   }
 }
 
 // points are red if they are in the predicate, blue otherwise
-function applyPredicates(clauses) {
+function applyPredicates(step) {
+  clauses = predicates[step][0] || [];
+
   if (!scatterData) return;
   const n = scatterData.x.length;
   const colors = [];
@@ -80,4 +83,12 @@ async function fetchAndRenderDataset() {
 
 document.getElementById("submit").addEventListener("click", requestPredicate);
 
-fetchAndRenderDataset();t
+
+const slider = document.getElementById("mySlider");
+const sliderValue = document.getElementById("sliderValue");
+slider.addEventListener("input", () => {
+  sliderValue.textContent = slider.value;
+  applyPredicates(parseInt(slider.value - 1, 10));
+});
+
+fetchAndRenderDataset();
