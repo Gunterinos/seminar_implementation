@@ -5,9 +5,12 @@ let scatterData = null;
 let predicates = null;
 let confusionMatrix = false;
 let step = 999;
+let selectedDataset = 'animals5';
+let selectedAttribute = null;
+const attributeSelect = document.getElementById("attribute-select");
 
 function renderScatter(data) {
-  const defaultColor = new Array(data.x.length).fill('grey');
+  const defaultColor = new Array(data.x.length).fill('blue');
   const trace = {
     x: data.x,
     y: data.y,
@@ -34,7 +37,7 @@ async function requestPredicate() {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      dataset: "animals5",
+      dataset: selectedDataset,
       subsets: currentSelection,
     }),
   });
@@ -45,20 +48,61 @@ async function requestPredicate() {
   }
 }
 
+function updateAttributeDropdown(clauses) {
+  const currentOptions = Array.from(attributeSelect.options).map(opt => opt.value);
+  const newOptions = [''].concat(clauses.map(c => c.attribute));
+  const optionsChanged = currentOptions.length !== newOptions.length || currentOptions.some((v, i) => v !== newOptions[i]);
+  if (!optionsChanged) return;
+
+  attributeSelect.innerHTML = '';
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'None';
+  attributeSelect.appendChild(defaultOption);
+  clauses.forEach((c, idx) => {
+    const option = document.createElement('option');
+    option.value = c.attribute;
+    option.textContent = c.attribute;
+    attributeSelect.appendChild(option);
+  });
+  if (!selectedAttribute || !clauses.some(c => c.attribute === selectedAttribute)) {
+    selectedAttribute = '';
+    attributeSelect.value = '';
+  } else {
+    attributeSelect.value = selectedAttribute;
+  }
+}
+
+attributeSelect.addEventListener('change', () => {
+  selectedAttribute = attributeSelect.value;
+  applyPredicates();
+});
+
 function applyPredicates() {
   const clauses = predicates[step][0] || [];
+  updateAttributeDropdown(clauses);
 
   if (!scatterData) return;
   const n = scatterData.x.length;
   const colors = [];
   for (let i = 0; i < n; i++) {
     let match = true;
-    for (const c of clauses) {
-      const val = scatterData[c.attribute][i];
-      const [low, high] = c.interval;
-      if (val < low || val > high) { match = false; break; }
+    if (selectedAttribute && selectedAttribute !== '') {
+      const clause = clauses.find(c => c.attribute === selectedAttribute);
+      if (clause) {
+        const val = scatterData[clause.attribute][i];
+        const [low, high] = clause.interval;
+        match = (val >= low && val <= high);
+      } else {
+        match = false;
+      }
+    } else {
+      for (const c of clauses) {
+        const val = scatterData[c.attribute][i];
+        const [low, high] = c.interval;
+        if (val < low || val > high) { match = false; break; }
+      }
     }
-    
     if (!confusionMatrix) {
       colors.push(match ? 'red' : 'blue');
     } else {
@@ -113,18 +157,15 @@ function renderBarplot(clauses) {
 
 async function fetchAndRenderDataset() {
   try {
-    const response = await fetch(`${API}/get_dataset/animals5`);
+    const response = await fetch(`${API}/get_dataset/${selectedDataset}`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json(); // Expects data in { x: [...], y: [...] }
-    if (!data || !Array.isArray(data.x) || !Array.isArray(data.y)) {
-      throw new Error("Fetched data is not in the expected format ({ x: [...], y: [...] }).");
-    }
+    const data = await response.json();
     scatterData = data;
     renderScatter(data);
   } catch (error) {
-    console.error("Failed to fetch and render initial dataset:", error);
+    console.error("Failed to get dataset:", error);
     if (plotDiv) {
-      plotDiv.innerHTML = `<p style="color: red;">Error loading dataset: ${error.message}. Please check the backend connection and data endpoint (e.g., ${API}/get_dataset/animals5).</p>`;
+      plotDiv.innerHTML = `<p style="color: red;">${error.message}</p>`;
     }
   }
 }
@@ -147,6 +188,12 @@ toggleCheckbox.addEventListener("change", () => {
   toggleLabel.textContent = toggleState ? "Confusion Matrix (On)" : "Confusion Matrix (Off)";
   confusionMatrix = toggleState;
   applyPredicates();
+});
+
+const datasetSelect = document.getElementById("dataset-select");
+datasetSelect.addEventListener("change", () => {
+  selectedDataset = datasetSelect.value;
+  fetchAndRenderDataset();
 });
 
 fetchAndRenderDataset();

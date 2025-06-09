@@ -41,6 +41,13 @@
 3. You can select a multiple predicates and see how they interact with each other.
 
 
+- ~~show the initial predicate~~
+- ~~make it so we can show step by step~~
 - ~~currently the dimensions that have a too large range are not shown in the projection view~~
-- add the confusion matrix
-- make it possible to select different datasets
+- ~~add the confusion matrix~~
+- ~~make it possible to select different datasets~~
+- make it so we can select a feature we want
+- make it so we can select a combination of features we want
+- maybe color them differently or something like that
+- now make it so it works for a sequence of regions
+- make it so we can select which regions we want
