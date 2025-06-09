@@ -8,6 +8,8 @@ let step = 999;
 let selectedDataset = 'animals5';
 let selectedAttribute = null;
 const attributeSelect = document.getElementById("attribute-select");
+const attributeCheckboxes = document.getElementById("attribute-checkboxes");
+let selectedAttributes = [];
 
 function renderScatter(data) {
   const defaultColor = new Array(data.x.length).fill('blue');
@@ -48,60 +50,55 @@ async function requestPredicate() {
   }
 }
 
-function updateAttributeDropdown(clauses) {
-  const currentOptions = Array.from(attributeSelect.options).map(opt => opt.value);
-  const newOptions = [''].concat(clauses.map(c => c.attribute));
-  const optionsChanged = currentOptions.length !== newOptions.length || currentOptions.some((v, i) => v !== newOptions[i]);
-  if (!optionsChanged) return;
-
-  attributeSelect.innerHTML = '';
-  const defaultOption = document.createElement('option');
-  defaultOption.value = '';
-  defaultOption.textContent = 'None';
-  attributeSelect.appendChild(defaultOption);
-  clauses.forEach((c, idx) => {
-    const option = document.createElement('option');
-    option.value = c.attribute;
-    option.textContent = c.attribute;
-    attributeSelect.appendChild(option);
-  });
-  if (!selectedAttribute || !clauses.some(c => c.attribute === selectedAttribute)) {
-    selectedAttribute = '';
-    attributeSelect.value = '';
-  } else {
-    attributeSelect.value = selectedAttribute;
+function updateAttributeCheckboxes(clauses) {
+  // Preserve current checked state
+  const prevSelected = new Set(selectedAttributes);
+  attributeCheckboxes.innerHTML = '';
+  // If no previous, select all by default
+  if (!selectedAttributes || selectedAttributes.length === 0) {
+    selectedAttributes = clauses.map(c => c.attribute);
   }
+  clauses.forEach((c, idx) => {
+    const label = document.createElement('label');
+    label.style.marginRight = '8px';
+    label.style.display = 'flex';
+    label.style.alignItems = 'center';
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = c.attribute;
+    checkbox.checked = prevSelected.size === 0 || prevSelected.has(c.attribute);
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) {
+        if (!selectedAttributes.includes(c.attribute)) selectedAttributes.push(c.attribute);
+      } else {
+        selectedAttributes = selectedAttributes.filter(attr => attr !== c.attribute);
+      }
+      applyPredicates();
+    });
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(' ' + c.attribute));
+    attributeCheckboxes.appendChild(label);
+  });
 }
-
-attributeSelect.addEventListener('change', () => {
-  selectedAttribute = attributeSelect.value;
-  applyPredicates();
-});
 
 function applyPredicates() {
   const clauses = predicates[step][0] || [];
-  updateAttributeDropdown(clauses);
+  updateAttributeCheckboxes(clauses);
 
   if (!scatterData) return;
   const n = scatterData.x.length;
   const colors = [];
   for (let i = 0; i < n; i++) {
     let match = true;
-    if (selectedAttribute && selectedAttribute !== '') {
-      const clause = clauses.find(c => c.attribute === selectedAttribute);
-      if (clause) {
-        const val = scatterData[clause.attribute][i];
-        const [low, high] = clause.interval;
-        match = (val >= low && val <= high);
-      } else {
-        match = false;
-      }
-    } else {
+    if (selectedAttributes.length > 0) {
       for (const c of clauses) {
+        if (!selectedAttributes.includes(c.attribute)) continue;
         const val = scatterData[c.attribute][i];
         const [low, high] = c.interval;
         if (val < low || val > high) { match = false; break; }
       }
+    } else {
+      match = false;
     }
     if (!confusionMatrix) {
       colors.push(match ? 'red' : 'blue');
@@ -114,15 +111,33 @@ function applyPredicates() {
       // 'grey' true negative
     }
   }
-  // update colors
   Plotly.restyle(plotDiv, 'marker.color', [colors]);
   renderBarplot(clauses);
+  // Optionally, highlight regions for selected attributes (if x/y)
+  const shapes = [];
+  for (const c of clauses) {
+    if (!selectedAttributes.includes(c.attribute)) continue;
+    if (c.attribute === 'x') {
+      shapes.push({
+        type: 'rect', xref: 'x', yref: 'paper', x0: c.interval[0], x1: c.interval[1], y0: 0, y1: 1,
+        fillcolor: 'rgba(255, 200, 0, 0.2)', line: { width: 0 }, layer: 'below'
+      });
+    } else if (c.attribute === 'y') {
+      shapes.push({
+        type: 'rect', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: c.interval[0], y1: c.interval[1],
+        fillcolor: 'rgba(255, 200, 0, 0.2)', line: { width: 0 }, layer: 'below'
+      });
+    }
+  }
+  Plotly.relayout(plotDiv, { shapes });
 }
 
 function renderBarplot(clauses) {
   const barDiv = document.getElementById("barplot");
+  // Remove any existing Plotly plot but keep the title
+  const plotlyDiv = barDiv.querySelector('.js-plotly-plot');
+  if (plotlyDiv) plotlyDiv.remove();
   if (!clauses || clauses.length === 0) {
-    Plotly.purge(barDiv);
     return;
   }
   const attributes = clauses.map(c => c.attribute);
@@ -142,11 +157,19 @@ function renderBarplot(clauses) {
     hovertemplate: '%{y}: [%{base}, %{x+base}]<extra></extra>',
   };
 
-  Plotly.newPlot(barDiv, [trace], {
-    title: 'Predicate Clauses',
-    xaxis: { title: 'Value Range', zeroline: false },
-    yaxis: { title: 'Attribute', automargin: true },
-    margin: { l: 120, r: 30, t: 40, b: 40 },
+  // Create a new div for Plotly to avoid duplicating the title
+  const plotDiv = document.createElement('div');
+  barDiv.appendChild(plotDiv);
+  Plotly.newPlot(plotDiv, [trace], {
+    title: '',
+    xaxis: {
+      title: { text: 'Value Range', font: { size: 16, family: 'Segoe UI, Arial, sans-serif', weight: 'bold', color: '#2a3f5f' } },
+      zeroline: false,
+      titlefont: { size: 16, family: 'Segoe UI, Arial, sans-serif', color: '#2a3f5f', weight: 'bold' },
+      automargin: true,
+      title_standoff: 30
+    },
+    margin: { l: 120, r: 30, t: 40, b: 60 },
     height: 600,
     width: 400,
   }, {
@@ -174,10 +197,21 @@ document.getElementById("submit").addEventListener("click", requestPredicate);
 
 
 const slider = document.getElementById("mySlider");
-const sliderValue = document.getElementById("sliderValue");
+const stepInput = document.getElementById("stepInput");
+
 slider.addEventListener("input", () => {
-  sliderValue.textContent = slider.value;
+  stepInput.value = slider.value;
   step = parseInt(slider.value, 10);
+  applyPredicates();
+});
+
+stepInput.addEventListener("input", () => {
+  let val = parseInt(stepInput.value, 10);
+  if (isNaN(val)) val = 1;
+  if (val < 1) val = 1;
+  if (val > 1000) val = 1000;
+  slider.value = val;
+  step = val;
   applyPredicates();
 });
 

@@ -120,3 +120,59 @@ pre#output {
   color: #2a3f5f;
   font-weight: 500;
 }
+
+#attribute-checkboxes label {
+  margin-right: 12px;
+  font-size: 1rem;
+  color: #2a3f5f;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+#attribute-checkboxes input[type="checkbox"] {
+  accent-color: #2a3f5f;
+  width: 18px;
+  height: 18px;
+  margin-right: 6px;
+  cursor: pointer;
+}
+
+#dataset-select {
+  font-size: 1rem;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  background: #fff;
+  color: #2a3f5f;
+  margin-right: 8px;
+  transition: border 0.2s;
+}
+#dataset-select:focus {
+  border: 1.5px solid #2a3f5f;
+  outline: none;
+}
+
+#barplot-title {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2a3f5f;
+  z-index: 2;
+  background: #fff;
+  padding: 4px 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(44,62,80,0.05);
+  pointer-events: none;
+  text-align: center;
+}
+
+label[for="stepInput"] {
+  font-weight: 500;
+  color: #2a3f5f;
+  font-size: 1rem;
+  margin-left: 32px;
+  margin-right: 0;
+}

@@ -18,16 +18,17 @@
         <option value="animals5">animals5</option>
         <option value="gait2">gait2</option>
       </select>
-      <label for="attribute-select" style="font-weight: 500; color: #2a3f5f;">Selected Predicate Feature:</label>
-      <select id="attribute-select" style="font-size: 1rem; padding: 4px 12px; border-radius: 6px; border: 1px solid #bbb;"></select>
-      <label for="mySlider" style="margin-left: 32px;">Train step: <span id="sliderValue">1000</span></label>
+      
+      <label for="stepInput" style="margin-left: 32px;">Train step:</label>
+      <input type="number" id="stepInput" min="1" max="1000" value="1000" style="width: 70px; margin: 0 12px; font-size: 1rem; padding: 2px 8px; border-radius: 6px; border: 1px solid #bbb;">
       <input type="range" id="mySlider" min="1" max="1000" value="1000">
     </div>
 
+    <span id="attribute-checkboxes" style="display: flex; align-items: center; gap: 12px;"></span>
+
     <div class="flex-row">
-      <div id="scatter-container" style="display: flex; flex-direction: column; align-items: center; width: 800px; background: #fff; box-shadow: 0 2px 12px rgba(44,62,80,0.08); border-radius: 12px; padding: 12px; position: relative;">
+      <div id="scatter" style="width: 800px; height: 600px; position: relative;">
         <div id="scatter-title" style="position: absolute; top: 16px; left: 50%; transform: translateX(-50%); font-size: 1.2rem; font-weight: 600; color: #2a3f5f; z-index: 2; background: #fff; padding: 4px 16px; border-radius: 8px; box-shadow: 0 1px 6px rgba(44,62,80,0.05); pointer-events: none;">Projection View</div>
-        <div id="scatter" style="width: 800px; height: 600px;"></div>
       </div>
       <div id="barplot" style="width: 400px; height: 600px; position: relative;">
         <div id="barplot-title">Predicate Clauses</div>
