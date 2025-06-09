@@ -3,9 +3,11 @@ const plotDiv = document.getElementById("scatter");
 let currentSelection = [];
 let scatterData = null;
 let predicates = null;
+let confusionMatrix = false;
+let step = 999;
 
 function renderScatter(data) {
-  const defaultColor = new Array(data.x.length).fill('blue');
+  const defaultColor = new Array(data.x.length).fill('grey');
   const trace = {
     x: data.x,
     y: data.y,
@@ -39,12 +41,11 @@ async function requestPredicate() {
   const result = await response.json();
   if (result.predicates && result.predicates.length > 0) {
     predicates = result.predicates;
-    applyPredicates(999);
+    applyPredicates();
   }
 }
 
-// points are red if they are in the predicate, blue otherwise
-function applyPredicates(step) {
+function applyPredicates() {
   const clauses = predicates[step][0] || [];
 
   if (!scatterData) return;
@@ -57,7 +58,17 @@ function applyPredicates(step) {
       const [low, high] = c.interval;
       if (val < low || val > high) { match = false; break; }
     }
-    colors.push(match ? 'red' : 'blue');
+    
+    if (!confusionMatrix) {
+      colors.push(match ? 'red' : 'blue');
+    } else {
+      const ma = currentSelection.some(sel => sel[i]);
+      colors.push(match ? (ma ? 'purple' : 'red') : (ma ? 'blue' : 'grey'));
+      // 'purple' true positive
+      // 'red' false positive
+      // 'blue' false negative
+      // 'grey' true negative
+    }
   }
   // update colors
   Plotly.restyle(plotDiv, 'marker.color', [colors]);
@@ -70,7 +81,6 @@ function renderBarplot(clauses) {
     Plotly.purge(barDiv);
     return;
   }
-  // Each clause is a concept/attribute, show its interval as a bar
   const attributes = clauses.map(c => c.attribute);
   const lows = clauses.map(c => c.interval[0]);
   const highs = clauses.map(c => c.interval[1]);
@@ -95,6 +105,9 @@ function renderBarplot(clauses) {
     margin: { l: 120, r: 30, t: 40, b: 40 },
     height: 600,
     width: 400,
+  }, {
+    staticPlot: true,
+    displayModeBar: false
   });
 }
 
@@ -123,7 +136,17 @@ const slider = document.getElementById("mySlider");
 const sliderValue = document.getElementById("sliderValue");
 slider.addEventListener("input", () => {
   sliderValue.textContent = slider.value;
-  applyPredicates(parseInt(slider.value - 1, 10));
+  step = parseInt(slider.value, 10);
+  applyPredicates();
+});
+
+const toggleCheckbox = document.getElementById("toggle-checkbox");
+const toggleLabel = document.getElementById("toggle-label");
+toggleCheckbox.addEventListener("change", () => {
+  const toggleState = toggleCheckbox.checked;
+  toggleLabel.textContent = toggleState ? "Confusion Matrix (On)" : "Confusion Matrix (Off)";
+  confusionMatrix = toggleState;
+  applyPredicates();
 });
 
 fetchAndRenderDataset();

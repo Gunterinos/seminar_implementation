@@ -37,23 +37,6 @@ h1 {
 
 #barplot {
   margin-left: 0;
-  position: relative;
-}
-
-#barplot-title {
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #2a3f5f;
-  z-index: 2;
-  background: #fff;
-  padding: 4px 16px;
-  border-radius: 8px;
-  box-shadow: 0 1px 6px rgba(44,62,80,0.05);
-  pointer-events: none;
 }
 
 #mySlider {
@@ -93,4 +76,47 @@ pre#output {
   font-size: 1rem;
   color: #333;
   overflow-x: auto;
+}
+
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  margin: 24px 0 0 0;
+  user-select: none;
+}
+.toggle-switch input[type="checkbox"] {
+  display: none;
+}
+.toggle-switch .slider {
+  width: 48px;
+  height: 24px;
+  background: #ccc;
+  border-radius: 24px;
+  position: relative;
+  transition: background 0.2s;
+  margin-right: 12px;
+  cursor: pointer;
+}
+.toggle-switch .slider:before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(44,62,80,0.10);
+}
+.toggle-switch input[type="checkbox"]:checked + .slider {
+  background: #2a3f5f;
+}
+.toggle-switch input[type="checkbox"]:checked + .slider:before {
+  transform: translateX(24px);
+}
+.toggle-label {
+  font-size: 1.1rem;
+  color: #2a3f5f;
+  font-weight: 500;
 }
