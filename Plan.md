@@ -48,6 +48,8 @@
 - ~~make it possible to select different datasets~~
 - ~~make it so we can select a feature we want~~
 - ~~make it so we can select a combination of features we want~~
-- add distribution plots on the predicate barplot, to see what data we select
+- ~~add distribution plots on the predicate barplot, to see what data we select~~
+- ~~fix predicate clauses to have a scroll bar if they don't fit~~
+- ~~fix so text wraps for predicate clauses, when the title doesn't fit~~
 - now make it so it works for a sequence of regions
 - make it so we can select which regions we want

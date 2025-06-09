@@ -143,36 +143,99 @@ function renderBarplot(clauses) {
   const attributes = clauses.map(c => c.attribute);
   const lows = clauses.map(c => c.interval[0]);
   const highs = clauses.map(c => c.interval[1]);
-  const widths = highs.map((hi, i) => hi - lows[i]);
-  const centers = highs.map((hi, i) => (hi + lows[i]) / 2);
 
-  const trace = {
-    x: widths,
-    y: attributes,
-    orientation: 'h',
-    base: lows,
-    width: 0.6,
-    type: 'bar',
-    marker: { color: 'rgba(100, 150, 255, 0.7)' },
-    hovertemplate: '%{y}: [%{base}, %{x+base}]<extra></extra>',
+  // Compute the full range for all attributes in this predicate
+  const allLows = attributes.map(attr => Math.min(...scatterData[attr]));
+  const allHighs = attributes.map(attr => Math.max(...scatterData[attr]));
+  const globalMin = Math.min(...allLows);
+  const globalMax = Math.max(...allHighs);
+
+  // For each feature, create a subplot: kde + range overlay
+  const subplotTraces = [];
+  const subplotLayout = {
+    grid: { rows: attributes.length, columns: 1, pattern: 'independent' },
+    height: 180 * attributes.length,
+    width: 400,
+    margin: { l: 120, r: 30, t: 40, b: 40 }, // more left margin for side labels
+    showlegend: false,
+    annotations: attributes.map((attr, i) => ({
+      text: `<b>${attr.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([\w]{10,})/g, '$&<br>')}</b>`,
+      x: -0.13, // position to the left of the plot
+      y: 1 - (i + 0.5) / attributes.length,
+      xref: 'paper',
+      yref: 'paper',
+      xanchor: 'right',
+      yanchor: 'middle',
+      showarrow: false,
+      font: { size: 15, family: 'Segoe UI, Arial, sans-serif', color: '#2a3f5f' },
+      align: 'right',
+      borderpad: 2,
+    })),
   };
 
-  // Create a new div for Plotly to avoid duplicating the title
-  const plotDiv = document.createElement('div');
-  barDiv.appendChild(plotDiv);
-  Plotly.newPlot(plotDiv, [trace], {
-    title: '',
-    xaxis: {
-      title: { text: 'Value Range', font: { size: 16, family: 'Segoe UI, Arial, sans-serif', weight: 'bold', color: '#2a3f5f' } },
+  attributes.forEach((attr, i) => {
+    const values = scatterData[attr];
+    // Use global min/max for all subplots
+    const min = globalMin;
+    const max = globalMax;
+    const binCount = 40;
+    const binWidth = (max - min) / binCount;
+    const bins = Array(binCount).fill(0);
+    values.forEach(v => {
+      const idx = Math.min(binCount - 1, Math.floor((v - min) / binWidth));
+      bins[idx] += 1;
+    });
+    // KDE (histogram) trace
+    const maxBin = Math.max(...bins);
+    const kdeTrace = {
+      x: bins.map((_, j) => min + j * binWidth),
+      y: bins.map(b => b / maxBin),
+      type: 'scatter',
+      mode: 'lines',
+      fill: 'tozeroy',
+      fillcolor: 'rgba(100,150,255,0.15)',
+      line: { color: 'rgba(100,150,255,0.5)', width: 3 },
+      hoverinfo: 'skip',
+      xaxis: `x${i + 1}`,
+      yaxis: `y${i + 1}`,
+      showlegend: false,
+    };
+    // Range overlay (predicate clause)
+    const clause = clauses[i];
+    const rangeTrace = {
+      x: [clause.interval[0], clause.interval[1], clause.interval[1], clause.interval[0], clause.interval[0]],
+      y: [0, 0, 1, 1, 0],
+      type: 'scatter',
+      mode: 'lines',
+      fill: 'toself',
+      fillcolor: 'rgba(100, 150, 255, 0.5)',
+      line: { color: 'rgba(100, 150, 255, 0.7)', width: 0 },
+      hoverinfo: 'skip',
+      xaxis: `x${i + 1}`,
+      yaxis: `y${i + 1}`,
+      showlegend: false,
+    };
+    subplotTraces.push(kdeTrace, rangeTrace);
+    // Add axis titles and labels
+    subplotLayout[`xaxis${i + 1}`] = {
+      range: [min, max],
+      showgrid: false,
       zeroline: false,
-      titlefont: { size: 16, family: 'Segoe UI, Arial, sans-serif', color: '#2a3f5f', weight: 'bold' },
+      tickfont: { size: 12 },
+      titlefont: { size: 15, family: 'Segoe UI, Arial, sans-serif', color: '#2a3f5f', weight: 'bold' },
       automargin: true,
-      title_standoff: 30
-    },
-    margin: { l: 120, r: 30, t: 40, b: 60 },
-    height: 600,
-    width: 400,
-  }, {
+      title_standoff: 10,
+    };
+    subplotLayout[`yaxis${i + 1}`] = {
+      range: [0, 1.05],
+      showticklabels: false,
+      showgrid: false,
+      zeroline: false,
+      fixedrange: true,
+    };
+  });
+
+  Plotly.newPlot(barDiv, subplotTraces, subplotLayout, {
     staticPlot: true,
     displayModeBar: false
   });
@@ -207,9 +270,10 @@ slider.addEventListener("input", () => {
 
 stepInput.addEventListener("input", () => {
   let val = parseInt(stepInput.value, 10);
-  if (isNaN(val)) val = 1;
-  if (val < 1) val = 1;
-  if (val > 1000) val = 1000;
+  if (isNaN(val)) val = 0;
+  if (val < 0) val = 0;
+  if (val > 999) val = 999;
+  stepInput.value = val; // enforce the value in the input box
   slider.value = val;
   step = val;
   applyPredicates();

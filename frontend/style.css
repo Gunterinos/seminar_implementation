@@ -36,7 +36,16 @@ h1 {
 }
 
 #barplot {
-  margin-left: 0;
+  width: 400px;
+  height: 600px;
+  position: relative;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 80vh;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(44,62,80,0.07);
+  padding-bottom: 12px;
 }
 
 #mySlider {
@@ -157,7 +166,7 @@ pre#output {
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 600;
   color: #2a3f5f;
   z-index: 2;
@@ -167,6 +176,19 @@ pre#output {
   box-shadow: 0 1px 6px rgba(44,62,80,0.05);
   pointer-events: none;
   text-align: center;
+  margin-bottom: 12px;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  max-width: 100%;
+}
+
+.g-annotation text, .g-annotation tspan {
+  white-space: pre-line !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  max-width: 90px !important;
+  font-size: 15px !important;
 }
 
 label[for="stepInput"] {
