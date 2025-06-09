@@ -46,7 +46,7 @@
 - ~~currently the dimensions that have a too large range are not shown in the projection view~~
 - ~~add the confusion matrix~~
 - ~~make it possible to select different datasets~~
-- make it so we can select a feature we want
+- ~~make it so we can select a feature we want~~
 - make it so we can select a combination of features we want
 - maybe color them differently or something like that
 - now make it so it works for a sequence of regions
