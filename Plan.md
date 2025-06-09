@@ -47,7 +47,7 @@
 - ~~add the confusion matrix~~
 - ~~make it possible to select different datasets~~
 - ~~make it so we can select a feature we want~~
-- make it so we can select a combination of features we want
-- maybe color them differently or something like that
+- ~~make it so we can select a combination of features we want~~
+- add distribution plots on the predicate barplot, to see what data we select
 - now make it so it works for a sequence of regions
 - make it so we can select which regions we want
