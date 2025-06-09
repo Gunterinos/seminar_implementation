@@ -1,0 +1,96 @@
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f7f9fb;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+h1 {
+  text-align: center;
+  margin-top: 32px;
+  color: #2a3f5f;
+}
+
+.center-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+  justify-content: center;
+  align-items: flex-start;
+  margin-top: 32px;
+}
+
+#scatter, #barplot {
+  box-shadow: 0 2px 12px rgba(44,62,80,0.08);
+  border-radius: 12px;
+  background: #fff;
+  padding: 12px;
+}
+
+#barplot {
+  margin-left: 0;
+  position: relative;
+}
+
+#barplot-title {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2a3f5f;
+  z-index: 2;
+  background: #fff;
+  padding: 4px 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(44,62,80,0.05);
+  pointer-events: none;
+}
+
+#mySlider {
+  width: 400px;
+  margin: 0 16px;
+}
+
+label[for="mySlider"] {
+  font-weight: 500;
+  color: #2a3f5f;
+  margin-right: 8px;
+}
+
+button#submit {
+  display: block;
+  margin: 32px auto 0 auto;
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  background: #2a3f5f;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+button#submit:hover {
+  background: #1a2533;
+}
+
+pre#output {
+  background: #f4f6fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 24px auto 0 auto;
+  width: 80%;
+  max-width: 900px;
+  font-size: 1rem;
+  color: #333;
+  overflow-x: auto;
+}

@@ -45,7 +45,7 @@ async function requestPredicate() {
 
 // points are red if they are in the predicate, blue otherwise
 function applyPredicates(step) {
-  clauses = predicates[step][0] || [];
+  const clauses = predicates[step][0] || [];
 
   if (!scatterData) return;
   const n = scatterData.x.length;
@@ -61,6 +61,41 @@ function applyPredicates(step) {
   }
   // update colors
   Plotly.restyle(plotDiv, 'marker.color', [colors]);
+  renderBarplot(clauses);
+}
+
+function renderBarplot(clauses) {
+  const barDiv = document.getElementById("barplot");
+  if (!clauses || clauses.length === 0) {
+    Plotly.purge(barDiv);
+    return;
+  }
+  // Each clause is a concept/attribute, show its interval as a bar
+  const attributes = clauses.map(c => c.attribute);
+  const lows = clauses.map(c => c.interval[0]);
+  const highs = clauses.map(c => c.interval[1]);
+  const widths = highs.map((hi, i) => hi - lows[i]);
+  const centers = highs.map((hi, i) => (hi + lows[i]) / 2);
+
+  const trace = {
+    x: widths,
+    y: attributes,
+    orientation: 'h',
+    base: lows,
+    width: 0.6,
+    type: 'bar',
+    marker: { color: 'rgba(100, 150, 255, 0.7)' },
+    hovertemplate: '%{y}: [%{base}, %{x+base}]<extra></extra>',
+  };
+
+  Plotly.newPlot(barDiv, [trace], {
+    title: 'Predicate Clauses',
+    xaxis: { title: 'Value Range', zeroline: false },
+    yaxis: { title: 'Attribute', automargin: true },
+    margin: { l: 120, r: 30, t: 40, b: 40 },
+    height: 600,
+    width: 400,
+  });
 }
 
 async function fetchAndRenderDataset() {

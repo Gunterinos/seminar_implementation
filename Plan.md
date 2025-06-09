@@ -41,6 +41,6 @@
 3. You can select a multiple predicates and see how they interact with each other.
 
 
-- currently the dimensions that have a too large range are not shown in the projection view
+- ~~currently the dimensions that have a too large range are not shown in the projection view~~
 - add the confusion matrix
 - make it possible to select different datasets
