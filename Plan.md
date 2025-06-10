@@ -51,5 +51,8 @@
 - ~~add distribution plots on the predicate barplot, to see what data we select~~
 - ~~fix predicate clauses to have a scroll bar if they don't fit~~
 - ~~fix so text wraps for predicate clauses, when the title doesn't fit~~
+- ~~sliders for the predicates (don't know where )~~
+- fix so we can have train step between 1 and 1000 instead of 0 to 999
+- comparison with other regions
 - now make it so it works for a sequence of regions
 - make it so we can select which regions we want
