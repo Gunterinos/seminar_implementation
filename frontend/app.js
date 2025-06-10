@@ -12,6 +12,7 @@ const attributeCheckboxes = document.getElementById("attribute-checkboxes");
 let selectedAttributes = [];
 let distinctPredicateColors = false;
 const MAX_DISTINCT_PREDICATE_ATTRIBUTES = 3;
+let keepUnselectedOpaque = true; // New global toggle state
 
 /**
  * Renders the main scatter plot using Plotly, with selectable points.
@@ -24,7 +25,9 @@ function renderScatter(data) {
     y: data.y,
     mode: "markers",
     type: "scattergl",
-    marker: { size: 8, color: defaultColor },
+    marker: { size: 8, color: defaultColor, opacity: 1 },
+    selected: { marker: { opacity: 1 } },
+    unselected: { marker: { opacity: keepUnselectedOpaque ? 1 : 0.2 } },
   };
   Plotly.newPlot("scatter", [trace], {
     dragmode: "select",
@@ -191,7 +194,12 @@ function applyPredicates() {
       }
     }
   }
-  Plotly.restyle(plotDiv, 'marker.color', [colors]);
+  Plotly.restyle(plotDiv, {
+    'marker.color': [colors],
+    'marker.opacity': [1],
+    'selected.marker.opacity': [1],
+    'unselected.marker.opacity': [keepUnselectedOpaque ? 1 : 0.2],
+  });
   renderBarplot(clauses);
   renderLegend();
   const shapes = [];
@@ -630,3 +638,12 @@ function renderLegend(warningMsg) {
     });
   }
 }
+
+// Add event listener for the new toggle
+const unselectedOpacityCheckbox = document.getElementById("unselected-opacity-checkbox");
+const unselectedOpacityLabel = document.getElementById("unselected-opacity-label");
+unselectedOpacityCheckbox.addEventListener("change", () => {
+  keepUnselectedOpaque = unselectedOpacityCheckbox.checked;
+  unselectedOpacityLabel.textContent = keepUnselectedOpaque ? "Opaque Unselected Points (On)" : "Opaque Unselected Points (Off)";
+  applyPredicates();
+});

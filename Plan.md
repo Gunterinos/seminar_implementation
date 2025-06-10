@@ -52,6 +52,8 @@
 - ~~fix predicate clauses to have a scroll bar if they don't fit~~
 - ~~fix so text wraps for predicate clauses, when the title doesn't fit~~
 - ~~sliders for the predicates (don't know where )~~
+- ~~add distinct colours to features in a predicate~~
+- ~~fix so we can don't have transparent dots outside selected regions~~
 - fix so we can have train step between 1 and 1000 instead of 0 to 999
 - comparison with other regions
 - now make it so it works for a sequence of regions
