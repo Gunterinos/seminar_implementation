@@ -10,6 +10,8 @@ let selectedAttribute = null;
 const attributeSelect = document.getElementById("attribute-select");
 const attributeCheckboxes = document.getElementById("attribute-checkboxes");
 let selectedAttributes = [];
+let distinctPredicateColors = false;
+const MAX_DISTINCT_PREDICATE_ATTRIBUTES = 3;
 
 /**
  * Renders the main scatter plot using Plotly, with selectable points.
@@ -55,6 +57,7 @@ async function requestPredicate() {
   if (result.predicates && result.predicates.length > 0) {
     predicates = result.predicates;
     applyPredicates();
+    renderLegend();
   }
 }
 
@@ -92,6 +95,23 @@ function updateAttributeCheckboxes(clauses) {
 }
 
 /**
+ * Returns an array of visually distinct colors (as hex strings) for up to n predicates.
+ * @param {number} n - Number of colors needed.
+ * @returns {string[]} Array of color hex codes.
+ */
+function getDistinctColors(n) {
+  // Use a color palette (e.g., ColorBrewer Set1 or similar)
+  const palette = [
+    '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00',
+    '#ffff33', '#a65628', '#f781bf', '#999999', '#1b9e77',
+    '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d'
+  ];
+  if (n <= palette.length) return palette.slice(0, n);
+  // Fallback: interpolate hues
+  return Array.from({length: n}, (_, i) => `hsl(${Math.round(360*i/n)}, 70%, 50%)`);
+}
+
+/**
  * Applies the current predicates to the scatter plot, updating colors and overlays.
  * Also updates the attribute checkboxes and barplot.
  */
@@ -101,32 +121,79 @@ function applyPredicates() {
 
   if (!scatterData) return;
   const n = scatterData.x.length;
+  // Only use selected attributes for distinct coloring
+  const enabledClauses = clauses.filter(c => selectedAttributes.includes(c.attribute));
+  let useDistinct = distinctPredicateColors && enabledClauses.length > 0 && enabledClauses.length <= MAX_DISTINCT_PREDICATE_ATTRIBUTES;
+  if (distinctPredicateColors && enabledClauses.length > MAX_DISTINCT_PREDICATE_ATTRIBUTES) {
+    // Turn off distinct predicate colors permanently
+    distinctPredicateColors = false;
+    const distinctPredicateCheckbox = document.getElementById("distinct-predicate-checkbox");
+    const distinctPredicateLabel = document.getElementById("distinct-predicate-label");
+    if (distinctPredicateCheckbox) distinctPredicateCheckbox.checked = false;
+    if (distinctPredicateLabel) distinctPredicateLabel.textContent = "Distinct Predicate Colors (Off)";
+    renderLegend('Too many attributes selected for distinct colors (max 3). Distinct coloring has been turned off.');
+  }
   const colors = [];
-  for (let i = 0; i < n; i++) {
-    let match = true;
-    if (selectedAttributes.length > 0) {
-      for (const c of clauses) {
-        if (!selectedAttributes.includes(c.attribute)) continue;
-        const val = scatterData[c.attribute][i];
-        const [low, high] = c.interval;
-        if (val < low || val > high) { match = false; break; }
+  if (useDistinct && enabledClauses.length > 0) {
+    // Assign a color to each enabled predicate clause
+    const clauseColors = getDistinctColors(enabledClauses.length);
+    const comboColorMap = {};
+    for (let mask = 1; mask < (1 << enabledClauses.length); mask++) {
+      const indices = [];
+      for (let cIdx = 0; cIdx < enabledClauses.length; cIdx++) {
+        if (mask & (1 << cIdx)) indices.push(cIdx);
       }
-    } else {
-      match = false;
+      if (indices.length === 1) {
+        comboColorMap[mask] = clauseColors[indices[0]];
+      } else {
+        let rgb = [0,0,0];
+        indices.forEach(idx => {
+          const hex = clauseColors[idx].replace('#','');
+          rgb[0] += parseInt(hex.substring(0,2),16);
+          rgb[1] += parseInt(hex.substring(2,4),16);
+          rgb[2] += parseInt(hex.substring(4,6),16);
+        });
+        rgb = rgb.map(x => Math.round(x/indices.length));
+        comboColorMap[mask] = `#${rgb.map(x=>x.toString(16).padStart(2,'0')).join('')}`;
+      }
     }
-    if (!confusionMatrix) {
-      colors.push(match ? 'red' : 'blue');
-    } else {
-      const ma = currentSelection.some(sel => sel[i]);
-      colors.push(match ? (ma ? 'purple' : 'red') : (ma ? 'blue' : 'grey'));
-      // 'purple' true positive
-      // 'red' false positive
-      // 'blue' false negative
-      // 'grey' true negative
+    for (let i = 0; i < n; i++) {
+      let mask = 0;
+      for (let cIdx = 0; cIdx < enabledClauses.length; cIdx++) {
+        const val = scatterData[enabledClauses[cIdx].attribute][i];
+        const [low, high] = enabledClauses[cIdx].interval;
+        if (val >= low && val <= high) mask |= (1 << cIdx);
+      }
+      if (mask === 0) {
+        colors.push('#cccccc'); // Not in any predicate, no fading
+      } else {
+        colors.push(comboColorMap[mask]);
+      }
+    }
+  } else {
+    for (let i = 0; i < n; i++) {
+      let match = true;
+      if (selectedAttributes.length > 0) {
+        for (const c of clauses) {
+          if (!selectedAttributes.includes(c.attribute)) continue;
+          const val = scatterData[c.attribute][i];
+          const [low, high] = c.interval;
+          if (val < low || val > high) { match = false; break; }
+        }
+      } else {
+        match = false;
+      }
+      if (!confusionMatrix) {
+        colors.push(match ? 'red' : 'blue');
+      } else {
+        const ma = currentSelection.some(sel => sel[i]);
+        colors.push(match ? (ma ? 'purple' : 'red') : (ma ? 'blue' : 'grey'));
+      }
     }
   }
   Plotly.restyle(plotDiv, 'marker.color', [colors]);
   renderBarplot(clauses);
+  renderLegend();
   const shapes = [];
   for (const c of clauses) {
     if (!selectedAttributes.includes(c.attribute)) continue;
@@ -347,6 +414,7 @@ async function fetchAndRenderDataset() {
     const data = await response.json();
     scatterData = data;
     renderScatter(data);
+    renderLegend();
   } catch (error) {
     console.error("Failed to get dataset:", error);
     if (plotDiv) {
@@ -392,6 +460,16 @@ toggleCheckbox.addEventListener("change", () => {
   applyPredicates();
 });
 
+const distinctPredicateCheckbox = document.getElementById("distinct-predicate-checkbox");
+const distinctPredicateLabel = document.getElementById("distinct-predicate-label");
+distinctPredicateCheckbox.addEventListener("change", () => {
+  distinctPredicateColors = distinctPredicateCheckbox.checked;
+  distinctPredicateLabel.innerHTML = distinctPredicateColors
+    ? "Distinct Predicate Colors (On)<br>Limited to at most 3 features at once"
+    : "Distinct Predicate Colors (Off)<br>Limited to at most 3 features at once";
+  applyPredicates();
+});
+
 const datasetSelect = document.getElementById("dataset-select");
 datasetSelect.addEventListener("change", () => {
   selectedDataset = datasetSelect.value;
@@ -399,3 +477,156 @@ datasetSelect.addEventListener("change", () => {
 });
 
 fetchAndRenderDataset();
+
+/**
+ * Renders a legend in the Clause Sliders panel, depending on the current coloring mode.
+ */
+function renderLegend(warningMsg) {
+  const legendDivId = 'predicate-legend';
+  let legendDiv = document.getElementById(legendDivId);
+  if (!legendDiv) {
+    legendDiv = document.createElement('div');
+    legendDiv.id = legendDivId;
+    legendDiv.style.margin = '12px 0 8px 0';
+    legendDiv.style.padding = '8px 12px';
+    legendDiv.style.background = '#f7f9fb';
+    legendDiv.style.borderRadius = '8px';
+    legendDiv.style.fontSize = '0.98rem';
+    legendDiv.style.boxShadow = '0 1px 4px rgba(44,62,80,0.06)';
+    legendDiv.style.display = 'flex';
+    legendDiv.style.flexDirection = 'column';
+    legendDiv.style.gap = '6px';
+    const slidersPanel = document.getElementById('sliders-panel');
+    slidersPanel.insertBefore(legendDiv, slidersPanel.children[1]);
+  }
+  legendDiv.innerHTML = '';
+  if (warningMsg) {
+    const warn = document.createElement('div');
+    warn.style.color = '#b30000';
+    warn.style.fontWeight = 'bold';
+    warn.style.marginBottom = '6px';
+    warn.textContent = warningMsg;
+    legendDiv.appendChild(warn);
+  }
+  if (distinctPredicateColors && predicates && predicates[step] && predicates[step][0]) {
+    const allClauses = predicates[step][0];
+    const enabledClauses = allClauses.filter(c => selectedAttributes.includes(c.attribute));
+    const clauseColors = getDistinctColors(enabledClauses.length);
+    legendDiv.innerHTML = '<b>Legend: Distinct Predicate Colors</b>';
+    // single predicate colors
+    const singleRows = enabledClauses.map((c, i) => {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '8px';
+      const swatch = document.createElement('span');
+      swatch.style.display = 'inline-block';
+      swatch.style.width = '18px';
+      swatch.style.height = '18px';
+      swatch.style.borderRadius = '4px';
+      swatch.style.background = clauseColors[i];
+      swatch.style.border = '1.5px solid #bbb';
+      row.appendChild(swatch);
+      const label = document.createElement('span');
+      label.textContent = c.attribute;
+      label.style.color = '#2a3f5f';
+      row.appendChild(label);
+      return row;
+    });
+    // combination colors
+    const combos = [];
+    for (let mask = 1; mask < (1 << enabledClauses.length); mask++) {
+      const indices = [];
+      for (let cIdx = 0; cIdx < enabledClauses.length; cIdx++) {
+        if (mask & (1 << cIdx)) indices.push(cIdx);
+      }
+      if (indices.length <= 1) continue;
+      let rgb = [0,0,0];
+      indices.forEach(idx => {
+        const hex = clauseColors[idx].replace('#','');
+        rgb[0] += parseInt(hex.substring(0,2),16);
+        rgb[1] += parseInt(hex.substring(2,4),16);
+        rgb[2] += parseInt(hex.substring(4,6),16);
+      });
+      rgb = rgb.map(x => Math.round(x/indices.length));
+      const blendColor = `#${rgb.map(x=>x.toString(16).padStart(2,'0')).join('')}`;
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '8px';
+      const swatch = document.createElement('span');
+      swatch.style.display = 'inline-block';
+      swatch.style.width = '18px';
+      swatch.style.height = '18px';
+      swatch.style.borderRadius = '4px';
+      swatch.style.background = blendColor;
+      swatch.style.border = '1.5px solid #bbb';
+      row.appendChild(swatch);
+      const label = document.createElement('span');
+      label.textContent = indices.map(idx => enabledClauses[idx].attribute).join(' ∩ ');
+      label.style.color = '#2a3f5f';
+      row.appendChild(label);
+      combos.push(row);
+    }
+    const legendGrid = document.createElement('div');
+    legendGrid.style.display = 'grid';
+    legendGrid.style.gridTemplateColumns = '1fr 1fr';
+    legendGrid.style.gap = '4px 12px';
+    singleRows.concat(combos).forEach((row, i) => legendGrid.appendChild(row));
+    legendDiv.appendChild(legendGrid);
+  } else if (confusionMatrix) {
+    // confusion matrix legend
+    legendDiv.innerHTML = '<b>Legend: Confusion Matrix</b>';
+    const items = [
+      { color: 'purple', label: 'True Positive' },
+      { color: 'red', label: 'False Positive' },
+      { color: 'blue', label: 'False Negative' },
+      { color: 'grey', label: 'True Negative' },
+    ];
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '8px';
+      const swatch = document.createElement('span');
+      swatch.style.display = 'inline-block';
+      swatch.style.width = '18px';
+      swatch.style.height = '18px';
+      swatch.style.borderRadius = '4px';
+      swatch.style.background = item.color;
+      swatch.style.border = '1.5px solid #bbb';
+      row.appendChild(swatch);
+      const label = document.createElement('span');
+      label.textContent = item.label;
+      label.style.color = '#2a3f5f';
+      row.appendChild(label);
+      legendDiv.appendChild(row);
+    });
+  } else {
+    // default legend
+    legendDiv.innerHTML = '<b>Legend: Default Coloring</b>';
+    const items = [
+      { color: 'red', label: 'In Predicate' },
+      { color: 'blue', label: 'Not in Predicate' },
+    ];
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.style.display = 'flex';
+      row.style.alignItems = 'center';
+      row.style.gap = '8px';
+      const swatch = document.createElement('span');
+      swatch.style.display = 'inline-block';
+      swatch.style.width = '18px';
+      swatch.style.height = '18px';
+      swatch.style.borderRadius = '4px';
+      swatch.style.background = item.color;
+      swatch.style.border = '1.5px solid #bbb';
+      row.appendChild(swatch);
+      const label = document.createElement('span');
+      label.textContent = item.label;
+      label.style.color = '#2a3f5f';
+      row.appendChild(label);
+      legendDiv.appendChild(row);
+    });
+  }
+}

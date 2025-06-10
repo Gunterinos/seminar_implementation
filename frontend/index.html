@@ -39,12 +39,21 @@
       </div>
     </div>
 
-    <label class="toggle-switch">
-      <input type="checkbox" id="toggle-checkbox">
-      <span class="slider"></span>
+    <div style="display: flex; align-items: center; gap: 12px; margin-top: 16px;">
+      <label class="toggle-switch">
+        <input type="checkbox" id="toggle-checkbox">
+        <span class="slider"></span>
+      </label>
       <span class="toggle-label" id="toggle-label">Confusion Matrix (Off)</span>
-    </label>
-    <button id="submit">Submit Brush</button>
+      
+      <label class="toggle-switch" style="margin-left: 18px;">
+        <input type="checkbox" id="distinct-predicate-checkbox">
+        <span class="slider"></span>
+      </label>
+      <span class="toggle-label" id="distinct-predicate-label">Distinct Predicate Colors (Off) <br> Limited to at most 3 features at once</span>
+      
+      <button id="submit" style="margin-left: 18px; font-size: 1rem; padding: 6px 16px; border-radius: 6px; border: 1px solid #bbb; background: #2a3f5f; color: #fff; font-weight: 500; cursor: pointer; transition: background 0.2s;">Submit Brush</button>
+    </div>
     <pre id="output"></pre>
   </div>
 </body>

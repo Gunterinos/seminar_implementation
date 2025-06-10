@@ -198,3 +198,21 @@ label[for="stepInput"] {
   margin-left: 32px;
   margin-right: 0;
 }
+
+#distinct-predicate-btn {
+  margin-left: 18px;
+  font-size: 1rem;
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  background: #f7f7fa;
+  color: #2a3f5f;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s, color 0.2s;
+}
+#distinct-predicate-btn.active {
+  background: #e6f7ff;
+  border-color: #2a3f5f;
+  color: #0074d9;
+}
