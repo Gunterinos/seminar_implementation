@@ -12,7 +12,7 @@ const attributeCheckboxes = document.getElementById("attribute-checkboxes");
 let selectedAttributes = [];
 let distinctPredicateColors = false;
 const MAX_DISTINCT_PREDICATE_ATTRIBUTES = 3;
-let keepUnselectedOpaque = true; // New global toggle state
+let keepUnselectedOpaque = true;
 let xAxis = 'x';
 let yAxis = 'y';
 const xAxisSelect = document.getElementById('x-axis-select');
@@ -111,14 +111,12 @@ function updateAttributeCheckboxes(clauses) {
  * @returns {string[]} Array of color hex codes.
  */
 function getDistinctColors(n) {
-  // Use a color palette (e.g., ColorBrewer Set1 or similar)
   const palette = [
     '#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00',
     '#ffff33', '#a65628', '#f781bf', '#999999', '#1b9e77',
     '#d95f02', '#7570b3', '#e7298a', '#66a61e', '#e6ab02', '#a6761d'
   ];
   if (n <= palette.length) return palette.slice(0, n);
-  // Fallback: interpolate hues
   return Array.from({length: n}, (_, i) => `hsl(${Math.round(360*i/n)}, 70%, 50%)`);
 }
 
@@ -132,11 +130,9 @@ function applyPredicates() {
 
   if (!scatterData) return;
   const n = scatterData.x.length;
-  // Only use selected attributes for distinct coloring
   const enabledClauses = clauses.filter(c => selectedAttributes.includes(c.attribute));
   let useDistinct = distinctPredicateColors && enabledClauses.length > 0 && enabledClauses.length <= MAX_DISTINCT_PREDICATE_ATTRIBUTES;
   if (distinctPredicateColors && enabledClauses.length > MAX_DISTINCT_PREDICATE_ATTRIBUTES) {
-    // Turn off distinct predicate colors permanently
     distinctPredicateColors = false;
     const distinctPredicateCheckbox = document.getElementById("distinct-predicate-checkbox");
     const distinctPredicateLabel = document.getElementById("distinct-predicate-label");
@@ -146,7 +142,6 @@ function applyPredicates() {
   }
   const colors = [];
   if (useDistinct && enabledClauses.length > 0) {
-    // Assign a color to each enabled predicate clause
     const clauseColors = getDistinctColors(enabledClauses.length);
     const comboColorMap = {};
     for (let mask = 1; mask < (1 << enabledClauses.length); mask++) {
@@ -176,7 +171,7 @@ function applyPredicates() {
         if (val >= low && val <= high) mask |= (1 << cIdx);
       }
       if (mask === 0) {
-        colors.push('#cccccc'); // Not in any predicate, no fading
+        colors.push('#cccccc');g
       } else {
         colors.push(comboColorMap[mask]);
       }
@@ -423,7 +418,6 @@ function renderBarplot(clauses) {
       showlegend: false,
     };
     subplotTraces.push(kdeTrace, rangeTrace);
-    // Add axis titles and labels
     subplotLayout[`xaxis${i + 1}`] = {
       range: [min, max],
       showgrid: false,
@@ -701,7 +695,6 @@ function renderLegend(warningMsg) {
   }
 }
 
-// Add event listener for the new toggle
 const unselectedOpacityCheckbox = document.getElementById("unselected-opacity-checkbox");
 const unselectedOpacityLabel = document.getElementById("unselected-opacity-label");
 unselectedOpacityCheckbox.addEventListener("change", () => {
@@ -711,7 +704,6 @@ unselectedOpacityCheckbox.addEventListener("change", () => {
 });
 
 function populateAxisDropdowns(data) {
-  // Get all numeric columns except for x and y
   const columns = Object.keys(data).filter(
     k => Array.isArray(data[k]) && typeof data[k][0] === 'number'
   );
@@ -727,7 +719,7 @@ function populateAxisDropdowns(data) {
     yOpt.textContent = col;
     yAxisSelect.appendChild(yOpt);
   });
-  // Set defaults
+  // set defaults
   xAxisSelect.value = columns.includes('x') ? 'x' : columns[0];
   yAxisSelect.value = columns.includes('y') ? 'y' : (columns[1] || columns[0]);
   xAxis = xAxisSelect.value;
