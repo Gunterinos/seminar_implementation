@@ -55,7 +55,7 @@
 - ~~add distinct colours to features in a predicate~~
 - ~~fix so we can don't have transparent dots outside selected regions~~
 - fix so we can have train step between 1 and 1000 instead of 0 to 999
-- let users choose axes
+- ~~let users choose axes~~
 - add text for explaining what is showng
 - ~~add hyper params how they evolve~~
 - ~~add also to choose the L1 norm hyperparam for sparsity~~ -> this is actually not used and set as 0 (mention this in the visualization)

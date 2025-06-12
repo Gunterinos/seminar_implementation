@@ -13,16 +13,20 @@ let selectedAttributes = [];
 let distinctPredicateColors = false;
 const MAX_DISTINCT_PREDICATE_ATTRIBUTES = 3;
 let keepUnselectedOpaque = true; // New global toggle state
+let xAxis = 'x';
+let yAxis = 'y';
+const xAxisSelect = document.getElementById('x-axis-select');
+const yAxisSelect = document.getElementById('y-axis-select');
 
 /**
  * Renders the main scatter plot using Plotly, with selectable points.
  * @param {Object} data - The dataset containing x, y, and feature arrays.
  */
 function renderScatter(data) {
-  const defaultColor = new Array(data.x.length).fill('blue');
+  const defaultColor = new Array(data[xAxis].length).fill('blue');
   const trace = {
-    x: data.x,
-    y: data.y,
+    x: data[xAxis],
+    y: data[yAxis],
     mode: "markers",
     type: "scattergl",
     marker: { size: 8, color: defaultColor, opacity: 1 },
@@ -35,7 +39,7 @@ function renderScatter(data) {
   });
 
   plotDiv.on("plotly_selected", (eventData) => {
-    const selected = new Array(data.x.length).fill(false);
+    const selected = new Array(data[xAxis].length).fill(false);
     if (eventData) {
       eventData.points.forEach(p => selected[p.pointIndex] = true);
       currentSelection = [selected];
@@ -463,6 +467,7 @@ async function fetchAndRenderDataset() {
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     scatterData = data;
+    populateAxisDropdowns(data);
     renderScatter(data);
     renderLegend();
   } catch (error) {
@@ -524,6 +529,15 @@ const datasetSelect = document.getElementById("dataset-select");
 datasetSelect.addEventListener("change", () => {
   selectedDataset = datasetSelect.value;
   fetchAndRenderDataset();
+});
+
+xAxisSelect.addEventListener('change', () => {
+  xAxis = xAxisSelect.value;
+  if (scatterData) renderScatter(scatterData);
+});
+yAxisSelect.addEventListener('change', () => {
+  yAxis = yAxisSelect.value;
+  if (scatterData) renderScatter(scatterData);
 });
 
 fetchAndRenderDataset();
@@ -689,3 +703,27 @@ unselectedOpacityCheckbox.addEventListener("change", () => {
   unselectedOpacityLabel.textContent = keepUnselectedOpaque ? "Opaque Unselected Points (On)" : "Opaque Unselected Points (Off)";
   applyPredicates();
 });
+
+function populateAxisDropdowns(data) {
+  // Get all numeric columns except for x and y
+  const columns = Object.keys(data).filter(
+    k => Array.isArray(data[k]) && typeof data[k][0] === 'number'
+  );
+  xAxisSelect.innerHTML = '';
+  yAxisSelect.innerHTML = '';
+  columns.forEach(col => {
+    const xOpt = document.createElement('option');
+    xOpt.value = col;
+    xOpt.textContent = col;
+    xAxisSelect.appendChild(xOpt);
+    const yOpt = document.createElement('option');
+    yOpt.value = col;
+    yOpt.textContent = col;
+    yAxisSelect.appendChild(yOpt);
+  });
+  // Set defaults
+  xAxisSelect.value = columns.includes('x') ? 'x' : columns[0];
+  yAxisSelect.value = columns.includes('y') ? 'y' : (columns[1] || columns[0]);
+  xAxis = xAxisSelect.value;
+  yAxis = yAxisSelect.value;
+}
