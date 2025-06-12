@@ -6,7 +6,7 @@ import os, sys
 # Ensure the project root is on sys.path so we can import external.predicate
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from external_code.predicate import compute_predicate_sequence, load_data
+from external_code.predicate import compute_predicate, load_data
 
 app = Flask(__name__, static_folder="../frontend", static_url_path="/")
 CORS(app)
@@ -29,8 +29,9 @@ def predicate():
 
     x0, columns = _current["x0"], _current["columns"]
     subsets = np.array(data["subsets"], dtype=bool)
+    lambda_a = float(data.get("lambda", 0))
 
-    preds, quals, _ = compute_predicate_sequence(x0, subsets, columns)
+    preds, quals, _ = compute_predicate(x0, subsets, columns, lambda_a)
     return jsonify(dict(predicates=preds, qualities=quals))
 
 @app.route("/get_dataset/<dataset_name>")

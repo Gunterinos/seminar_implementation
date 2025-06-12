@@ -48,12 +48,16 @@ function renderScatter(data) {
  * Updates the global predicates and applies them to the UI.
  */
 async function requestPredicate() {
+  const lambdaInput = document.getElementById("lambdaInput");
+  const lambda = lambdaInput ? parseFloat(lambdaInput.value) : 0;
+
   const response = await fetch(`${API}/predicate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       dataset: selectedDataset,
       subsets: currentSelection,
+      lambda: lambda
     }),
   });
   const result = await response.json();
@@ -261,6 +265,36 @@ function createClauseSliderRow(clause, values) {
   valueSpan.style.fontSize = '0.95rem';
   valueSpan.style.color = '#444';
 
+  const formulaMiuDiv = document.createElement('div');
+  formulaMiuDiv.style.fontSize = '1rem';
+  formulaMiuDiv.style.color = '#2a3f5f';
+  formulaMiuDiv.style.marginLeft = '100px';
+  formulaMiuDiv.style.marginTop = '2px';
+
+  const formulaRDiv = document.createElement('div');
+  formulaRDiv.style.fontSize = '1rem';
+  formulaRDiv.style.color = '#2a3f5f';
+  formulaRDiv.style.marginLeft = '100px';
+  formulaRDiv.style.marginTop = '2px';
+
+  const formulaADiv = document.createElement('div');
+  formulaADiv.style.fontSize = '1rem';
+  formulaADiv.style.color = '#2a3f5f';
+  formulaADiv.style.marginLeft = '100px';
+  formulaADiv.style.marginTop = '2px';
+
+  function updateMiuR() {
+    const min = +lowSlider.value;
+    const max = +highSlider.value;
+    const miu = (max + min) / 2;
+    const r = (max - min) / 2;
+    const a = r !== 0 ? 1 / r : '∞';
+    formulaMiuDiv.innerHTML = `<b>µ<sub>j</sub></b> = (ϕ<sub>max,j</sub> + ϕ<sub>min,j</sub>)/2 &nbsp;→&nbsp; <b>${miu.toFixed(3)}</b>`;
+    formulaRDiv.innerHTML = `r<sub>j</sub> = (ϕ<sub>max,j</sub> − ϕ<sub>min,j</sub>)/2 &nbsp;→&nbsp; ${r.toFixed(3)}`;
+    formulaADiv.innerHTML = `<b>a<sub>j</sub></b> = 1/r<sub>j</sub> &nbsp;→&nbsp; <b>${a === '∞' ? a : a.toFixed(3)}</b>`;
+  }
+  updateMiuR();
+
   lowSlider.addEventListener('input', () => {
     let low = parseFloat(lowSlider.value);
     let high = parseFloat(highSlider.value);
@@ -270,6 +304,7 @@ function createClauseSliderRow(clause, values) {
     }
     clause.interval[0] = low;
     valueSpan.textContent = `[${(+clause.interval[0]).toFixed(2)}, ${(+clause.interval[1]).toFixed(2)}]`;
+    updateMiuR();
   });
   lowSlider.addEventListener('change', () => {
     applyPredicates();
@@ -283,6 +318,7 @@ function createClauseSliderRow(clause, values) {
     }
     clause.interval[1] = high;
     valueSpan.textContent = `[${(+clause.interval[0]).toFixed(2)}, ${(+clause.interval[1]).toFixed(2)}]`;
+    updateMiuR();
   });
   highSlider.addEventListener('change', () => {
     applyPredicates();
@@ -291,7 +327,13 @@ function createClauseSliderRow(clause, values) {
   container.appendChild(lowSlider);
   container.appendChild(highSlider);
   container.appendChild(valueSpan);
-  return container;
+
+  const wrapper = document.createElement('div');
+  wrapper.appendChild(container);
+  wrapper.appendChild(formulaMiuDiv);
+  wrapper.appendChild(formulaRDiv);
+  wrapper.appendChild(formulaADiv);
+  return wrapper;
 }
 
 /**

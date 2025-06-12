@@ -56,10 +56,11 @@ def predict(x, a, mu):
     return pred
 
 
-def compute_predicate_sequence(
+def compute_predicate(
         x0,
         selected,
         columns,
+        lambda_a,
         n_iter=1000,
         device=device,
 ):
@@ -135,12 +136,10 @@ def compute_predicate_sequence(
             loss = bce(pred, label[t])
             loss += (mu[t] - selection_centroids[t]).pow(2).mean() * 20
             loss_per_brush.append(loss)
-        smoothness_loss = 100 * (a[1:] - a[:-1]).pow(2).mean()
-        smoothness_loss += 100 * (mu[1:] - mu[:-1]).pow(2).mean()
         # print('bce', loss_per_brush)
         # print('smoothness', smoothness_loss.item())
-        sparsity_loss = 0  # a.abs().mean() * 100
-        total_loss = sum(loss_per_brush) + smoothness_loss + sparsity_loss
+        sparsity_loss = a.abs().mean() * lambda_a
+        total_loss = sum(loss_per_brush) + sparsity_loss
         optimizer.zero_grad()
         total_loss.backward()
         optimizer.step()
