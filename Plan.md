@@ -56,9 +56,10 @@
 - ~~fix so we can don't have transparent dots outside selected regions~~
 - fix so we can have train step between 1 and 1000 instead of 0 to 999
 - ~~let users choose axes~~
-- add text for explaining what is showng
+- ~~add text for explaining what is showng~~
 - ~~add hyper params how they evolve~~
-- ~~add also to choose the L1 norm hyperparam for sparsity~~ -> this is actually not used and set as 0 (mention this in the visualization)
+- ~~add also to choose the L1 norm hyperparam for sparsity~~~~ -> this is actually not used and set as 0 (mention this in the visualization)~~
+- fix bug when switching axes we the predicate dissapears 
 - comparison with other regions
 - now make it so it works for a sequence of regions
 - make it so we can select which regions we want

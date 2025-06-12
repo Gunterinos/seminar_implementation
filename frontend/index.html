@@ -8,6 +8,51 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="hamburger-menu" style="position: fixed; top: 24px; left: 24px; z-index: 1001; cursor: pointer; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: rgba(44,62,80,0.08); border-radius: 8px; border: 1.5px solid #b3c6e0; box-shadow: 0 2px 8px rgba(44,62,80,0.08);">
+    <div style="width: 22px; height: 18px; display: flex; flex-direction: column; justify-content: space-between;">
+      <span style="display: block; height: 3px; width: 100%; background: #2a3f5f; border-radius: 2px;"></span>
+      <span style="display: block; height: 3px; width: 100%; background: #2a3f5f; border-radius: 2px;"></span>
+      <span style="display: block; height: 3px; width: 100%; background: #2a3f5f; border-radius: 2px;"></span>
+    </div>
+  </div>
+  <span style="position: fixed; top: 28px; left: 70px; z-index: 1001; color: #2a3f5f; font-size: 1.08rem; font-weight: 500; background: rgba(255,255,255,0.85); padding: 3px 14px 3px 10px; border-radius: 7px; border: 1px solid #b3c6e0; box-shadow: 0 1px 4px rgba(44,62,80,0.07); pointer-events: none;">Additional Information</span>
+  <div id="info-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1000; background: transparent; pointer-events: none;">
+    <div style="position: absolute; top: 70px; left: 24px; max-width: 500px; background: rgba(44,62,80,0.8); border-radius: 14px; box-shadow: 0 2px 16px rgba(44,62,80,0.13); padding: 32px 32px 28px 32px; color: #f3f6fa; font-size: 1.08rem; font-family: inherit; pointer-events: auto; border: 1.5px solid #b3c6e0;">
+      <div style="margin-bottom: 18px;">
+        <b>Algorithm steps & formulas:</b><br>
+        The predicate is a conjunction of intervals over selected dimensions:<br>
+        <span style="font-family: 'Fira Mono', monospace; font-size: 0.98em; color: #e0e6f0; display: block; margin: 8px 0;">
+          Φ(x<sub>i</sub>) = 1[ϕ<sub>j,min</sub> ≤ x<sub>ij</sub> ≤ ϕ<sub>j,max</sub> for all j]
+        </span>
+        Each clause is parameterized by center and width:<br>
+        <span style="font-family: 'Fira Mono', monospace; font-size: 0.98em; color: #e0e6f0; display: block; margin: 8px 0;">
+          μ<sub>j</sub> = (ϕ<sub>j,max</sub> + ϕ<sub>j,min</sub>) / 2<br>
+          r<sub>j</sub> = (ϕ<sub>j,max</sub> - ϕ<sub>j,min</sub>) / 2<br>
+          a<sub>j</sub> = 1 / r<sub>j</sub>
+        </span>
+        Instead of a hard 0/1 rule, a soft bump function is used for optimization:<br>
+        <span style="font-family: 'Fira Mono', monospace; font-size: 0.98em; color: #e0e6f0; display: block; margin: 8px 0;">
+          f(x) = 1 / (1 + Σ<sub>j</sub>|a<sub>j</sub>(x<sub>ij</sub> - μ<sub>j</sub>)|<sup>b</sup>)
+        </span>
+        The algorithm fits the predicate by minimizing binary cross-entropy loss, with a L1 penalty for sparsity.<br>
+        <span style="font-family: 'Fira Mono', monospace; font-size: 0.98em; color: #e0e6f0; display: block; margin: 8px 0;">
+          L = L<sub>bce</sub> + γ‖a‖<sub>1</sub>
+        </span>
+        <br>
+        <b>Screens & views:</b><br>
+        <ul style="margin: 6px 0 10px 18px; padding-left: 0;">
+          <li><b>Projection View:</b> A 2D scatter plot of the data using the selected axes. You can select a region to define a predicate.</li>
+          <li><b>Predicate Clauses:</b> Shows the current clauses that define the predicate. Each clause corresponds to a feature and describes the range for it.</li>
+          <li><b>Clause Sliders:</b> Lets you interactively adjust the bounds of each clause and see how the predicate changes in real time. It also shows the learned parameterf formulas and values for each clause.</li>
+        </ul>
+        <b>Disclaimer:</b><br>
+        <ul style="margin: 6px 0 10px 18px; padding-left: 0;"></ul>
+          <li><b>λ (L1) parameter:</b> Not used in the original code, but enabled here. Recommended to leave at 0 for best performance.</li>
+        </ul>
+      </div>
+      <!-- To adjust the transparency of the info box, change the alpha value in the background property above: background: rgba(44,62,80,0.6);  (0.6 = 60% opacity, lower is more transparent, higher is less) -->
+    </div>
+  </div>
   <h1>DimBridge Predicate Explanation Tool</h1>
 
   <div class="center-container">
@@ -72,5 +117,34 @@
     
     <pre id="output"></pre>
   </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const hamburger = document.getElementById('hamburger-menu');
+      const overlay = document.getElementById('info-overlay');
+      const closeBtn = document.getElementById('close-overlay-btn');
+      let overlayOpen = false;
+      function openOverlay() {
+        overlay.style.display = 'block';
+        overlayOpen = true;
+      }
+      function closeOverlay() {
+        overlay.style.display = 'none';
+        overlayOpen = false;
+      }
+      if (hamburger) {
+        hamburger.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (!overlayOpen) openOverlay();
+          else closeOverlay();
+        });
+      }
+      if (closeBtn) closeBtn.onclick = closeOverlay;
+      if (overlay) {
+        overlay.addEventListener('click', function(e) {
+          if (e.target === overlay) closeOverlay();
+        });
+      }
+    });
+</script>
 </body>
 </html>
