@@ -533,11 +533,17 @@ datasetSelect.addEventListener("change", () => {
 
 xAxisSelect.addEventListener('change', () => {
   xAxis = xAxisSelect.value;
-  if (scatterData) renderScatter(scatterData);
+  if (scatterData) {
+    renderScatter(scatterData);
+    applyPredicates();
+  }
 });
 yAxisSelect.addEventListener('change', () => {
   yAxis = yAxisSelect.value;
-  if (scatterData) renderScatter(scatterData);
+  if (scatterData) {
+    renderScatter(scatterData);
+    applyPredicates();
+  }
 });
 
 fetchAndRenderDataset();
