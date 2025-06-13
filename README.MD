@@ -45,3 +45,4 @@ After completing these steps, you should be able to use the system.
 # External Resources
 
 - `external_code/predicate.py`: Contains the computation logic for the predicate. This code was extracted from [this repository](https://github.com/tiga1231/dim-bridge).
+- `external_code/datasets`: Contains the datasets used in the paper, namely `animals5.csv` and `gait2.csv`. They were extracted from the same repository as mentioned before.
