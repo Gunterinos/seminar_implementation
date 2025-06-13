@@ -23,7 +23,7 @@ def predicate():
     data = request.get_json()
     dataset = data["dataset"].replace("_local", "")
     if _current["dataset"] != dataset:
-        path = f"../frontend/datasets/{dataset}.csv"
+        path = f"../external_code/datasets/{dataset}.csv"
         _current["x0"], _current["columns"] = load_data(path)
         _current["dataset"] = dataset
 
@@ -37,7 +37,7 @@ def predicate():
 @app.route("/get_dataset/<dataset_name>")
 def get_dataset(dataset_name):
     try:
-        csv_path = f"../frontend/datasets/{dataset_name}.csv"
+        csv_path = f"../external_code/datasets/{dataset_name}.csv"
         df_full = pd.read_csv(csv_path)
         df = df_full.select_dtypes(include=[np.number])
         if 'x' not in df.columns or 'y' not in df.columns:

@@ -171,7 +171,7 @@ function applyPredicates() {
         if (val >= low && val <= high) mask |= (1 << cIdx);
       }
       if (mask === 0) {
-        colors.push('#cccccc');g
+        colors.push('#cccccc');
       } else {
         colors.push(comboColorMap[mask]);
       }
