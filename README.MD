@@ -1,3 +1,7 @@
+# About 
+
+This repo aims to implement an educational tool for the paper DimBridge: Interactive Explanation of Visual Patterns in Dimensionality Reductions with Predicate Logic, which can be found [here](https://arxiv.org/abs/2404.07386).
+
 # Setup Instructions
 
 Use your preferred package manager; in my case, I am using [uv](https://docs.astral.sh/uv/getting-started/installation/).
